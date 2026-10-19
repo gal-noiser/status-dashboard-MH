@@ -5,12 +5,25 @@ export type LogRow = {
   group_id: string;
   result: string;
   reason: string | null;
+  text: string | null;
 };
 
-export type DayBucket = {
-  date: string; // YYYY-MM-DD
-  checked: number;
-  failed: number;
+export type StatusCount = {
+  status: string;
+  count: number;
+};
+
+export type MessageGroup = {
+  group_id: string;
+  result: string;
+};
+
+export type MessageSummary = {
+  message_id: string;
+  text: string | null;
+  source: string;
+  timestamp: string;
+  groups: MessageGroup[];
 };
 
 const WEBHOOK_URL = "https://hook.eu2.make.com/okxipu2auc4c3l2b8bkxqlspd3wweuxk";
@@ -25,45 +38,44 @@ export async function fetchLog(): Promise<LogRow[]> {
   return data as LogRow[];
 }
 
-export function isFailure(row: LogRow): boolean {
-  return row.result !== "Completed";
-}
-
-export function summarize(rows: LogRow[]) {
-  const checked = rows.length;
-  const failed = rows.filter(isFailure).length;
-  return {
-    checked,
-    failed,
-    failureRate: checked === 0 ? 0 : failed / checked,
-  };
-}
-
-export function dailyTrend(rows: LogRow[], days = 14): DayBucket[] {
-  const buckets = new Map<string, DayBucket>();
-  const now = new Date();
-
-  for (let i = days - 1; i >= 0; i--) {
-    const d = new Date(now);
-    d.setDate(now.getDate() - i);
-    const key = d.toISOString().slice(0, 10);
-    buckets.set(key, { date: key, checked: 0, failed: 0 });
-  }
-
+export function statusBreakdown(rows: LogRow[]): StatusCount[] {
+  const counts = new Map<string, number>();
   for (const row of rows) {
-    const key = row.timestamp?.slice(0, 10);
-    const bucket = buckets.get(key);
-    if (!bucket) continue;
-    bucket.checked += 1;
-    if (isFailure(row)) bucket.failed += 1;
+    const key = row.result ?? "(ללא סטטוס)";
+    counts.set(key, (counts.get(key) ?? 0) + 1);
   }
-
-  return Array.from(buckets.values());
+  return Array.from(counts.entries())
+    .map(([status, count]) => ({ status, count }))
+    .sort((a, b) => b.count - a.count);
 }
 
-export function recentFailures(rows: LogRow[], limit = 20): LogRow[] {
-  return rows
-    .filter(isFailure)
+export function recentMessages(rows: LogRow[], limit = 5): MessageSummary[] {
+  const byMessage = new Map<string, LogRow[]>();
+  for (const row of rows) {
+    const list = byMessage.get(row.message_id) ?? [];
+    list.push(row);
+    byMessage.set(row.message_id, list);
+  }
+
+  const summaries: MessageSummary[] = Array.from(byMessage.entries()).map(
+    ([message_id, group_rows]) => {
+      const latest = group_rows.reduce((a, b) =>
+        a.timestamp > b.timestamp ? a : b
+      );
+      return {
+        message_id,
+        text: group_rows.find((r) => r.text)?.text ?? null,
+        source: latest.source,
+        timestamp: latest.timestamp,
+        groups: group_rows.map((r) => ({
+          group_id: r.group_id,
+          result: r.result,
+        })),
+      };
+    }
+  );
+
+  return summaries
     .sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1))
     .slice(0, limit);
 }

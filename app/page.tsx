@@ -1,27 +1,28 @@
-import { dailyTrend, fetchLog, recentFailures, summarize } from "@/lib/log";
-import { FailureTrendChart } from "@/components/FailureTrendChart";
+import { fetchLog, recentMessages, statusBreakdown } from "@/lib/log";
 
 export const dynamic = "force-dynamic";
 
-function StatTile({
-  label,
-  value,
-  tone = "default",
-}: {
-  label: string;
-  value: string;
-  tone?: "default" | "critical";
-}) {
+function StatTile({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-lg border border-black/10 bg-white px-5 py-4 flex-1 min-w-[160px]">
       <div className="text-sm text-[#52514e]">{label}</div>
-      <div
-        className="text-3xl font-semibold mt-1"
-        style={{ color: tone === "critical" ? "#d03b3b" : "#0b0b0b" }}
-      >
-        {value}
-      </div>
+      <div className="text-3xl font-semibold mt-1 text-[#0b0b0b]">{value}</div>
     </div>
+  );
+}
+
+function StatusPill({ status }: { status: string }) {
+  const isCompleted = status === "Completed";
+  return (
+    <span
+      className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
+      style={{
+        background: isCompleted ? "#0ca30c1a" : "#d03b3b1a",
+        color: isCompleted ? "#0ca30c" : "#d03b3b",
+      }}
+    >
+      {status}
+    </span>
   );
 }
 
@@ -35,16 +36,15 @@ export default async function DashboardPage() {
     error = e instanceof Error ? e.message : "שגיאה לא ידועה";
   }
 
-  const { checked, failed, failureRate } = summarize(rows);
-  const trend = dailyTrend(rows, 14);
-  const failures = recentFailures(rows, 25);
+  const statuses = statusBreakdown(rows);
+  const messages = recentMessages(rows, 5);
 
   return (
     <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-8 space-y-8">
       <header>
-        <h1 className="text-2xl font-semibold">סטטוס הודעות — כשלים שקטים</h1>
+        <h1 className="text-2xl font-semibold">סטטוס הודעות</h1>
         <p className="text-sm text-[#52514e] mt-1">
-          המבזק החברתי (Beacon) · הודעות WhatsApp שביקון החזיר עליהן הצלחה אך לא הגיעו בפועל
+          המבזק החברתי (Beacon) · הסטטוס שביקון מחזיר לכל הודעה, לפי קבוצה
         </p>
       </header>
 
@@ -55,54 +55,48 @@ export default async function DashboardPage() {
       )}
 
       <section className="flex flex-wrap gap-4">
-        <StatTile label="סה״כ נבדקו" value={String(checked)} />
-        <StatTile
-          label="כשלים שקטים"
-          value={String(failed)}
-          tone={failed > 0 ? "critical" : "default"}
-        />
-        <StatTile
-          label="שיעור כשל"
-          value={`${(failureRate * 100).toFixed(1)}%`}
-          tone={failureRate > 0 ? "critical" : "default"}
-        />
+        <StatTile label="סה״כ נבדקו" value={String(rows.length)} />
+        {statuses.map((s) => (
+          <StatTile key={s.status} label={s.status} value={String(s.count)} />
+        ))}
       </section>
 
       <section className="rounded-lg border border-black/10 bg-white p-5">
-        <h2 className="text-sm font-medium text-[#52514e] mb-3">
-          כשלים ליום — 14 הימים האחרונים
+        <h2 className="text-sm font-medium text-[#52514e] mb-4">
+          5 ההודעות האחרונות
         </h2>
-        <FailureTrendChart data={trend} />
-      </section>
-
-      <section className="rounded-lg border border-black/10 bg-white p-5">
-        <h2 className="text-sm font-medium text-[#52514e] mb-3">כשלים אחרונים</h2>
-        {failures.length === 0 ? (
-          <p className="text-sm text-[#898781]">אין כשלים רשומים.</p>
+        {messages.length === 0 ? (
+          <p className="text-sm text-[#898781]">אין עדיין נתונים.</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-right">
-              <thead>
-                <tr className="border-b border-black/10 text-[#898781]">
-                  <th className="py-2 font-normal">זמן</th>
-                  <th className="py-2 font-normal">מקור</th>
-                  <th className="py-2 font-normal">קבוצה</th>
-                  <th className="py-2 font-normal">סיבה</th>
-                </tr>
-              </thead>
-              <tbody>
-                {failures.map((f, i) => (
-                  <tr key={i} className="border-b border-black/5">
-                    <td className="py-2 whitespace-nowrap">
-                      {new Date(f.timestamp).toLocaleString("he-IL")}
-                    </td>
-                    <td className="py-2">{f.source}</td>
-                    <td className="py-2 font-mono text-xs">{f.group_id}</td>
-                    <td className="py-2">{f.reason ?? "—"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="space-y-5">
+            {messages.map((m) => (
+              <div
+                key={m.message_id}
+                className="border-b border-black/5 last:border-0 pb-4 last:pb-0"
+              >
+                <div className="flex items-baseline justify-between gap-3">
+                  <div className="text-xs text-[#898781]">
+                    {m.source} · {new Date(m.timestamp).toLocaleString("he-IL")}
+                  </div>
+                </div>
+                <p className="text-sm mt-1 whitespace-pre-wrap">
+                  {m.text ?? <span className="text-[#898781]">(אין טקסט רשום)</span>}
+                </p>
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {m.groups.map((g, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center gap-1.5 rounded-md border border-black/10 px-2 py-1"
+                    >
+                      <span className="font-mono text-[11px] text-[#52514e]">
+                        {g.group_id}
+                      </span>
+                      <StatusPill status={g.result} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </section>
