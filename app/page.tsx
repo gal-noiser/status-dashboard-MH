@@ -1,4 +1,5 @@
 import { fetchLog, recentMessages, statusBreakdown } from "@/lib/log";
+import { RefreshButton } from "@/components/RefreshButton";
 
 export const dynamic = "force-dynamic";
 
@@ -41,11 +42,14 @@ export default async function DashboardPage() {
 
   return (
     <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-8 space-y-8">
-      <header>
-        <h1 className="text-2xl font-semibold">סטטוס הודעות</h1>
-        <p className="text-sm text-[#52514e] mt-1">
-          המבזק החברתי (Beacon) · הסטטוס שביקון מחזיר לכל הודעה, לפי קבוצה
-        </p>
+      <header className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold">סטטוס הודעות</h1>
+          <p className="text-sm text-[#52514e] mt-1">
+            המבזק החברתי (Beacon) · הסטטוס שביקון מחזיר לכל הודעה, לפי קבוצה
+          </p>
+        </div>
+        <RefreshButton />
       </header>
 
       {error && (
