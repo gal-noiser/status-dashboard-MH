@@ -7,6 +7,8 @@ import {
 } from "@/lib/log";
 import { RefreshButton } from "@/components/RefreshButton";
 import { StatusTrendChart } from "@/components/StatusTrendChart";
+import { fetchMakeStatus, type ScenarioStatus } from "@/lib/makeStatus";
+import { MakeStatusCard } from "@/components/MakeStatusCard";
 
 export const dynamic = "force-dynamic";
 
@@ -54,6 +56,14 @@ export default async function DashboardPage() {
   const allStatuses = distinctStatuses(rows);
   const lastRefreshed = new Date().toLocaleString("he-IL", { timeZone: "Asia/Jerusalem" });
 
+  let makeStatusError: string | null = null;
+  let makeStatuses: ScenarioStatus[] = [];
+  try {
+    makeStatuses = await fetchMakeStatus();
+  } catch (e) {
+    makeStatusError = e instanceof Error ? e.message : "שגיאה לא ידועה";
+  }
+
   return (
     <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-8 space-y-8">
       <header
@@ -98,6 +108,8 @@ export default async function DashboardPage() {
           <StatTile key={s.status} label={s.status} value={String(s.count)} />
         ))}
       </section>
+
+      <MakeStatusCard statuses={makeStatuses} error={makeStatusError} />
 
       <section className="rounded-lg border border-black/10 bg-white p-5">
         <h2 className="text-sm font-medium text-[#52514e] mb-3">
