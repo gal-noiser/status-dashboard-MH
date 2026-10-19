@@ -52,7 +52,7 @@ export default async function DashboardPage() {
   const messages = recentMessages(rows, groupNames, 5);
   const trend = dailyStatusTrend(rows, 14);
   const allStatuses = distinctStatuses(rows);
-  const lastRefreshed = new Date().toLocaleString("he-IL");
+  const lastRefreshed = new Date().toLocaleString("he-IL", { timeZone: "Asia/Jerusalem" });
 
   return (
     <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-8 space-y-8">
@@ -121,7 +121,7 @@ export default async function DashboardPage() {
               >
                 <div className="flex items-baseline justify-between gap-3">
                   <div className="text-xs text-[#898781]">
-                    {m.source} · {new Date(m.timestamp).toLocaleString("he-IL")}
+                    {m.source} · {new Date(m.timestamp).toLocaleString("he-IL", { timeZone: "Asia/Jerusalem" })}
                   </div>
                 </div>
                 <p className="text-sm mt-1 whitespace-pre-wrap">
