@@ -49,6 +49,41 @@ export function statusBreakdown(rows: LogRow[]): StatusCount[] {
     .sort((a, b) => b.count - a.count);
 }
 
+export type DayStatusBucket = {
+  date: string; // YYYY-MM-DD
+  counts: Record<string, number>;
+};
+
+export function distinctStatuses(rows: LogRow[]): string[] {
+  const seen = new Set<string>();
+  for (const row of rows) {
+    seen.add(row.result ?? "(ללא סטטוס)");
+  }
+  return Array.from(seen);
+}
+
+export function dailyStatusTrend(rows: LogRow[], days = 14): DayStatusBucket[] {
+  const buckets = new Map<string, DayStatusBucket>();
+  const now = new Date();
+
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(now.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    buckets.set(key, { date: key, counts: {} });
+  }
+
+  for (const row of rows) {
+    const key = row.timestamp?.slice(0, 10);
+    const bucket = buckets.get(key);
+    if (!bucket) continue;
+    const status = row.result ?? "(ללא סטטוס)";
+    bucket.counts[status] = (bucket.counts[status] ?? 0) + 1;
+  }
+
+  return Array.from(buckets.values());
+}
+
 export function recentMessages(rows: LogRow[], limit = 5): MessageSummary[] {
   const byMessage = new Map<string, LogRow[]>();
   for (const row of rows) {

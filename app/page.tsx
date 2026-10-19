@@ -1,11 +1,18 @@
-import { fetchLog, recentMessages, statusBreakdown } from "@/lib/log";
+import {
+  dailyStatusTrend,
+  distinctStatuses,
+  fetchLog,
+  recentMessages,
+  statusBreakdown,
+} from "@/lib/log";
 import { RefreshButton } from "@/components/RefreshButton";
+import { StatusTrendChart } from "@/components/StatusTrendChart";
 
 export const dynamic = "force-dynamic";
 
 function StatTile({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-black/10 bg-white px-5 py-4 flex-1 min-w-[160px]">
+    <div className="rounded-lg border border-black/10 bg-white px-5 py-4 flex-1 min-w-[160px] border-t-4 border-t-[#1565d8]">
       <div className="text-sm text-[#52514e]">{label}</div>
       <div className="text-3xl font-semibold mt-1 text-[#0b0b0b]">{value}</div>
     </div>
@@ -39,15 +46,32 @@ export default async function DashboardPage() {
 
   const statuses = statusBreakdown(rows);
   const messages = recentMessages(rows, 5);
+  const trend = dailyStatusTrend(rows, 14);
+  const allStatuses = distinctStatuses(rows);
 
   return (
     <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-8 space-y-8">
-      <header className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold">סטטוס הודעות</h1>
-          <p className="text-sm text-[#52514e] mt-1">
-            המבזק החברתי (Beacon) · הסטטוס שביקון מחזיר לכל הודעה, לפי קבוצה
-          </p>
+      <header
+        className="flex items-center justify-between gap-4 rounded-xl px-5 py-4 text-white shadow-sm"
+        style={{
+          background: "linear-gradient(135deg, #1565d8 0%, #0d47a1 100%)",
+        }}
+      >
+        <div className="flex items-center gap-3">
+          <span
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full text-lg"
+            style={{ background: "#f4c430", color: "#111" }}
+          >
+            📡
+          </span>
+          <div>
+            <h1 className="text-xl font-bold leading-tight">
+              המבזק החברתי — סטטוס הודעות
+            </h1>
+            <p className="text-xs text-white/70 mt-0.5">
+              הסטטוס שביקון מחזיר לכל הודעה, לפי קבוצה
+            </p>
+          </div>
         </div>
         <RefreshButton />
       </header>
@@ -63,6 +87,13 @@ export default async function DashboardPage() {
         {statuses.map((s) => (
           <StatTile key={s.status} label={s.status} value={String(s.count)} />
         ))}
+      </section>
+
+      <section className="rounded-lg border border-black/10 bg-white p-5">
+        <h2 className="text-sm font-medium text-[#52514e] mb-3">
+          נפח בדיקות לפי יום — 14 הימים האחרונים
+        </h2>
+        <StatusTrendChart data={trend} statuses={allStatuses} />
       </section>
 
       <section className="rounded-lg border border-black/10 bg-white p-5">

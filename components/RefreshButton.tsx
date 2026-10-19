@@ -14,7 +14,7 @@ export function RefreshButton() {
         router.refresh();
         setTimeout(() => setSpinning(false), 600);
       }}
-      className="inline-flex items-center gap-2 rounded-md border border-black/10 bg-white px-3 py-1.5 text-sm text-[#52514e] hover:bg-black/[0.03] transition"
+      className="inline-flex items-center gap-2 rounded-md border border-white/30 bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20 transition shrink-0"
     >
       <span className={spinning ? "animate-spin" : ""}>↻</span>
       רענון
