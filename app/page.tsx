@@ -1,69 +1,111 @@
-import Image from "next/image";
+import { dailyTrend, fetchLog, recentFailures, summarize } from "@/lib/log";
+import { FailureTrendChart } from "@/components/FailureTrendChart";
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+function StatTile({
+  label,
+  value,
+  tone = "default",
+}: {
+  label: string;
+  value: string;
+  tone?: "default" | "critical";
+}) {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+    <div className="rounded-lg border border-black/10 bg-white px-5 py-4 flex-1 min-w-[160px]">
+      <div className="text-sm text-[#52514e]">{label}</div>
+      <div
+        className="text-3xl font-semibold mt-1"
+        style={{ color: tone === "critical" ? "#d03b3b" : "#0b0b0b" }}
+      >
+        {value}
+      </div>
     </div>
+  );
+}
+
+export default async function DashboardPage() {
+  let error: string | null = null;
+  let rows: Awaited<ReturnType<typeof fetchLog>> = [];
+
+  try {
+    rows = await fetchLog();
+  } catch (e) {
+    error = e instanceof Error ? e.message : "שגיאה לא ידועה";
+  }
+
+  const { checked, failed, failureRate } = summarize(rows);
+  const trend = dailyTrend(rows, 14);
+  const failures = recentFailures(rows, 25);
+
+  return (
+    <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-8 space-y-8">
+      <header>
+        <h1 className="text-2xl font-semibold">סטטוס הודעות — כשלים שקטים</h1>
+        <p className="text-sm text-[#52514e] mt-1">
+          המבזק החברתי (Beacon) · הודעות WhatsApp שביקון החזיר עליהן הצלחה אך לא הגיעו בפועל
+        </p>
+      </header>
+
+      {error && (
+        <div className="rounded-lg border border-[#d03b3b]/30 bg-[#d03b3b]/5 text-[#d03b3b] px-4 py-3 text-sm">
+          לא הצלחתי לשלוף נתונים מה-webhook: {error}
+        </div>
+      )}
+
+      <section className="flex flex-wrap gap-4">
+        <StatTile label="סה״כ נבדקו" value={String(checked)} />
+        <StatTile
+          label="כשלים שקטים"
+          value={String(failed)}
+          tone={failed > 0 ? "critical" : "default"}
+        />
+        <StatTile
+          label="שיעור כשל"
+          value={`${(failureRate * 100).toFixed(1)}%`}
+          tone={failureRate > 0 ? "critical" : "default"}
+        />
+      </section>
+
+      <section className="rounded-lg border border-black/10 bg-white p-5">
+        <h2 className="text-sm font-medium text-[#52514e] mb-3">
+          כשלים ליום — 14 הימים האחרונים
+        </h2>
+        <FailureTrendChart data={trend} />
+      </section>
+
+      <section className="rounded-lg border border-black/10 bg-white p-5">
+        <h2 className="text-sm font-medium text-[#52514e] mb-3">כשלים אחרונים</h2>
+        {failures.length === 0 ? (
+          <p className="text-sm text-[#898781]">אין כשלים רשומים.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-right">
+              <thead>
+                <tr className="border-b border-black/10 text-[#898781]">
+                  <th className="py-2 font-normal">זמן</th>
+                  <th className="py-2 font-normal">מקור</th>
+                  <th className="py-2 font-normal">קבוצה</th>
+                  <th className="py-2 font-normal">סיבה</th>
+                </tr>
+              </thead>
+              <tbody>
+                {failures.map((f, i) => (
+                  <tr key={i} className="border-b border-black/5">
+                    <td className="py-2 whitespace-nowrap">
+                      {new Date(f.timestamp).toLocaleString("he-IL")}
+                    </td>
+                    <td className="py-2">{f.source}</td>
+                    <td className="py-2 font-mono text-xs">{f.group_id}</td>
+                    <td className="py-2">{f.reason ?? "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+    </main>
   );
 }
