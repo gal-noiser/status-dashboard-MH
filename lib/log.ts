@@ -127,11 +127,22 @@ export function recentMessages(
         text: group_rows.find((r) => r.text)?.text ?? null,
         source: latest.source,
         timestamp: latest.timestamp,
-        groups: group_rows.map((r) => ({
-          group_id: r.group_id,
-          group_name: resolveGroupName(r.group_id, groupNames),
-          result: r.result,
-        })),
+        groups: group_rows
+          .map((r) => ({
+            group_id: r.group_id,
+            group_name: resolveGroupName(r.group_id, groupNames),
+            result: r.result,
+          }))
+          .sort((a, b) => {
+            const na = Number(a.group_name);
+            const nb = Number(b.group_name);
+            const aIsNum = a.group_name !== "" && !Number.isNaN(na);
+            const bIsNum = b.group_name !== "" && !Number.isNaN(nb);
+            if (aIsNum && bIsNum) return na - nb;
+            if (aIsNum) return -1;
+            if (bIsNum) return 1;
+            return a.group_name.localeCompare(b.group_name);
+          }),
       };
     }
   );
