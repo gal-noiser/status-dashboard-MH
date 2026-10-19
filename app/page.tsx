@@ -9,6 +9,7 @@ import { RefreshButton } from "@/components/RefreshButton";
 import { StatusTrendChart } from "@/components/StatusTrendChart";
 import { fetchMakeStatus, type ScenarioStatus } from "@/lib/makeStatus";
 import { MakeStatusCard } from "@/components/MakeStatusCard";
+import { ExpandableText } from "@/components/ExpandableText";
 
 export const dynamic = "force-dynamic";
 
@@ -136,9 +137,11 @@ export default async function DashboardPage() {
                     {m.source} · {new Date(m.timestamp).toLocaleString("he-IL", { timeZone: "Asia/Jerusalem" })}
                   </div>
                 </div>
-                <p className="text-sm mt-1 whitespace-pre-wrap">
-                  {m.text ?? <span className="text-[#898781]">(אין טקסט רשום)</span>}
-                </p>
+                {m.text ? (
+                  <ExpandableText text={m.text} />
+                ) : (
+                  <p className="text-sm mt-1 text-[#898781]">(אין טקסט רשום)</p>
+                )}
                 <div className="flex flex-wrap gap-2 mt-3">
                   {m.groups.map((g, i) => (
                     <div
