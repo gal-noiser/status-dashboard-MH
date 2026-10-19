@@ -13,15 +13,15 @@ export function MakeStatusCard({
       {error ? (
         <p className="text-sm text-[#d03b3b]">לא הצלחתי לבדוק: {error}</p>
       ) : (
-        <div className="space-y-2">
+        <div className="flex flex-wrap gap-x-6 gap-y-2">
           {statuses.map((s) => (
-            <div key={s.id} className="flex items-center justify-between text-sm">
-              <span>{s.name}</span>
+            <div key={s.id} className="flex items-center gap-1.5 text-sm">
               <span
-                className="inline-block h-3 w-3 rounded-full"
+                className="inline-block h-2.5 w-2.5 rounded-full shrink-0"
                 style={{ background: s.isActive ? "#0ca30c" : "#d03b3b" }}
                 title={s.isActive ? "פעיל" : "כבוי"}
               />
+              <span>{s.name}</span>
             </div>
           ))}
         </div>
