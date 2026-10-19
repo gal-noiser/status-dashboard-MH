@@ -36,16 +36,20 @@ function StatusPill({ status }: { status: string }) {
 
 export default async function DashboardPage() {
   let error: string | null = null;
-  let rows: Awaited<ReturnType<typeof fetchLog>> = [];
+  let feed: Awaited<ReturnType<typeof fetchLog>> = {
+    rows: [],
+    groupNames: new Map(),
+  };
 
   try {
-    rows = await fetchLog();
+    feed = await fetchLog();
   } catch (e) {
     error = e instanceof Error ? e.message : "שגיאה לא ידועה";
   }
 
+  const { rows, groupNames } = feed;
   const statuses = statusBreakdown(rows);
-  const messages = recentMessages(rows, 5);
+  const messages = recentMessages(rows, groupNames, 5);
   const trend = dailyStatusTrend(rows, 14);
   const allStatuses = distinctStatuses(rows);
   const lastRefreshed = new Date().toLocaleString("he-IL");
@@ -129,8 +133,8 @@ export default async function DashboardPage() {
                       key={i}
                       className="flex items-center gap-1.5 rounded-md border border-black/10 px-2 py-1"
                     >
-                      <span className="font-mono text-[11px] text-[#52514e]">
-                        {g.group_id}
+                      <span className="text-[11px] font-medium text-[#52514e]">
+                        {g.group_name}
                       </span>
                       <StatusPill status={g.result} />
                     </div>

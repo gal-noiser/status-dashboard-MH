@@ -15,6 +15,7 @@ export type StatusCount = {
 
 export type MessageGroup = {
   group_id: string;
+  group_name: string;
   result: string;
 };
 
@@ -26,16 +27,36 @@ export type MessageSummary = {
   groups: MessageGroup[];
 };
 
+export type GroupNameEntry = { group_id: string; group_number: string };
+
+export type LogFeed = {
+  rows: LogRow[];
+  groupNames: Map<string, string>;
+};
+
 const WEBHOOK_URL = "https://hook.eu2.make.com/okxipu2auc4c3l2b8bkxqlspd3wweuxk";
 
-export async function fetchLog(): Promise<LogRow[]> {
+export async function fetchLog(): Promise<LogFeed> {
   const res = await fetch(WEBHOOK_URL, { cache: "no-store" });
   if (!res.ok) {
     throw new Error(`Log feed failed: ${res.status}`);
   }
   const data = await res.json();
-  if (!Array.isArray(data)) return [];
-  return data as LogRow[];
+  const rows: LogRow[] = Array.isArray(data?.log) ? data.log : [];
+  const groupEntries: GroupNameEntry[] = Array.isArray(data?.groups)
+    ? data.groups
+    : [];
+  const groupNames = new Map(
+    groupEntries.map((g) => [g.group_id, g.group_number])
+  );
+  return { rows, groupNames };
+}
+
+export function resolveGroupName(
+  group_id: string,
+  groupNames: Map<string, string>
+): string {
+  return groupNames.get(group_id) ?? group_id;
 }
 
 export function statusBreakdown(rows: LogRow[]): StatusCount[] {
@@ -84,7 +105,11 @@ export function dailyStatusTrend(rows: LogRow[], days = 14): DayStatusBucket[] {
   return Array.from(buckets.values());
 }
 
-export function recentMessages(rows: LogRow[], limit = 5): MessageSummary[] {
+export function recentMessages(
+  rows: LogRow[],
+  groupNames: Map<string, string>,
+  limit = 5
+): MessageSummary[] {
   const byMessage = new Map<string, LogRow[]>();
   for (const row of rows) {
     const list = byMessage.get(row.message_id) ?? [];
@@ -104,6 +129,7 @@ export function recentMessages(rows: LogRow[], limit = 5): MessageSummary[] {
         timestamp: latest.timestamp,
         groups: group_rows.map((r) => ({
           group_id: r.group_id,
+          group_name: resolveGroupName(r.group_id, groupNames),
           result: r.result,
         })),
       };
