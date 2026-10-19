@@ -1,23 +1,20 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useTransition } from "react";
 
 export function RefreshButton() {
   const router = useRouter();
-  const [spinning, setSpinning] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   return (
     <button
-      onClick={() => {
-        setSpinning(true);
-        router.refresh();
-        setTimeout(() => setSpinning(false), 600);
-      }}
-      className="inline-flex items-center gap-2 rounded-md border border-white/30 bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20 transition shrink-0"
+      disabled={isPending}
+      onClick={() => startTransition(() => router.refresh())}
+      className="inline-flex items-center gap-2 rounded-md border border-white/30 bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20 transition shrink-0 disabled:opacity-60"
     >
-      <span className={spinning ? "animate-spin" : ""}>↻</span>
-      רענון
+      <span className={isPending ? "animate-spin" : ""}>↻</span>
+      {isPending ? "מרענן..." : "רענון"}
     </button>
   );
 }

@@ -48,22 +48,23 @@ export default async function DashboardPage() {
   const messages = recentMessages(rows, 5);
   const trend = dailyStatusTrend(rows, 14);
   const allStatuses = distinctStatuses(rows);
+  const lastRefreshed = new Date().toLocaleString("he-IL");
 
   return (
     <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-8 space-y-8">
       <header
-        className="flex items-center justify-between gap-4 rounded-xl px-5 py-4 text-white shadow-sm"
+        className="flex items-center justify-between gap-4 rounded-xl px-6 py-5 text-white shadow-sm"
         style={{
           background: "linear-gradient(135deg, #1565d8 0%, #0d47a1 100%)",
         }}
       >
-        <div className="flex items-center gap-3">
-          <span
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full text-lg"
-            style={{ background: "#f4c430", color: "#111" }}
-          >
-            📡
-          </span>
+        <div className="flex items-center gap-4">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo.jpg"
+            alt="המבזק החברתי"
+            className="h-14 w-14 rounded-lg object-cover shadow-sm shrink-0"
+          />
           <div>
             <h1 className="text-xl font-bold leading-tight">
               המבזק החברתי — סטטוס הודעות
@@ -73,7 +74,12 @@ export default async function DashboardPage() {
             </p>
           </div>
         </div>
-        <RefreshButton />
+        <div className="flex flex-col items-end gap-1 shrink-0">
+          <RefreshButton />
+          <span className="text-[11px] text-white/60">
+            ריענון אחרון: {lastRefreshed}
+          </span>
+        </div>
       </header>
 
       {error && (
