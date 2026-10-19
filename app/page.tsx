@@ -68,20 +68,20 @@ export default async function DashboardPage() {
   return (
     <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-8 space-y-8">
       <header
-        className="flex items-center justify-between gap-4 rounded-xl px-6 py-5 text-white shadow-sm"
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-xl px-4 sm:px-6 py-5 text-white shadow-sm"
         style={{
           background: "linear-gradient(135deg, #1565d8 0%, #0d47a1 100%)",
         }}
       >
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 min-w-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/logo.jpg"
             alt="המבזק החברתי"
             className="h-14 w-14 rounded-lg object-cover shadow-sm shrink-0"
           />
-          <div>
-            <h1 className="text-xl font-bold leading-tight">
+          <div className="min-w-0">
+            <h1 className="text-lg sm:text-xl font-bold leading-tight">
               המבזק החברתי — סטטוס הודעות
             </h1>
             <p className="text-xs text-white/70 mt-0.5">
@@ -89,7 +89,7 @@ export default async function DashboardPage() {
             </p>
           </div>
         </div>
-        <div className="flex flex-col items-end gap-1 shrink-0">
+        <div className="flex flex-row-reverse sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-1 sm:shrink-0">
           <RefreshButton />
           <span className="text-[11px] text-white/60">
             ריענון אחרון: {lastRefreshed}
