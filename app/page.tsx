@@ -45,6 +45,7 @@ export default async function DashboardPage() {
   let feed: Awaited<ReturnType<typeof fetchLog>> = {
     rows: [],
     groupNames: new Map(),
+    expectedCountByBot: new Map(),
   };
 
   try {
@@ -53,10 +54,10 @@ export default async function DashboardPage() {
     error = e instanceof Error ? e.message : "שגיאה לא ידועה";
   }
 
-  const { rows, groupNames } = feed;
+  const { rows, groupNames, expectedCountByBot } = feed;
   const rowsToday = todayRows(rows);
   const statuses = statusBreakdown(rowsToday);
-  const messages = recentMessages(rows, groupNames, 5);
+  const messages = recentMessages(rows, groupNames, 5, expectedCountByBot);
   const trend = dailyStatusTrend(rows, 14);
   const allStatuses = distinctStatuses(rows);
   const lastRefreshed = new Date().toLocaleString("he-IL", { timeZone: "Asia/Jerusalem" });

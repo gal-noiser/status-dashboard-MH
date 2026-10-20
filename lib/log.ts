@@ -28,14 +28,20 @@ export type MessageSummary = {
   groups: MessageGroup[];
 };
 
-export type GroupNameEntry = { group_id: string; group_number: string };
+export type GroupNameEntry = { group_id: string; group_number: string; bot?: string };
 
 export type LogFeed = {
   rows: LogRow[];
   groupNames: Map<string, string>;
+  expectedCountByBot: Map<string, number>;
 };
 
 const WEBHOOK_URL = "https://hook.eu2.make.com/okxipu2auc4c3l2b8bkxqlspd3wweuxk";
+
+// Maps a log row's free-text `source` to the "שיוך" value used in טאב לגל.
+export function normalizeSourceBot(source: string): string {
+  return source.includes("תרגום") ? "בוט תרגום" : "בוט הפצה";
+}
 
 export async function fetchLog(): Promise<LogFeed> {
   const res = await fetch(WEBHOOK_URL, { cache: "no-store" });
@@ -50,7 +56,12 @@ export async function fetchLog(): Promise<LogFeed> {
   const groupNames = new Map(
     groupEntries.map((g) => [g.group_id, g.group_number])
   );
-  return { rows, groupNames };
+  const expectedCountByBot = new Map<string, number>();
+  for (const g of groupEntries) {
+    if (!g.bot) continue;
+    expectedCountByBot.set(g.bot, (expectedCountByBot.get(g.bot) ?? 0) + 1);
+  }
+  return { rows, groupNames, expectedCountByBot };
 }
 
 export function resolveGroupName(
@@ -117,7 +128,8 @@ export function dailyStatusTrend(rows: LogRow[], days = 14): DayStatusBucket[] {
 export function recentMessages(
   rows: LogRow[],
   groupNames: Map<string, string>,
-  limit = 5
+  limit = 5,
+  expectedCountByBot: Map<string, number> = new Map()
 ): MessageSummary[] {
   const byMessage = new Map<string, LogRow[]>();
   for (const row of rows) {
@@ -126,8 +138,15 @@ export function recentMessages(
     byMessage.set(row.message_id, list);
   }
 
-  const summaries: MessageSummary[] = Array.from(byMessage.entries()).map(
-    ([message_id, group_rows]) => {
+  const summaries: MessageSummary[] = Array.from(byMessage.entries())
+    .filter(([, group_rows]) => {
+      const source = group_rows[0].source;
+      const expected = expectedCountByBot.get(normalizeSourceBot(source));
+      if (!expected) return true; // unknown bot — don't hide, just show what we have
+      const distinctGroups = new Set(group_rows.map((r) => r.group_id)).size;
+      return distinctGroups >= expected;
+    })
+    .map(([message_id, group_rows]) => {
       const latest = group_rows.reduce((a, b) =>
         a.timestamp > b.timestamp ? a : b
       );
