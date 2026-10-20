@@ -11,6 +11,7 @@ import { fetchMakeStatus, type ScenarioStatus } from "@/lib/makeStatus";
 import { MakeStatusCard } from "@/components/MakeStatusCard";
 import { ExpandableText } from "@/components/ExpandableText";
 import { ReportErrorButton } from "@/components/ReportErrorButton";
+import { ClosePopoverButton } from "@/components/ClosePopoverButton";
 
 export const dynamic = "force-dynamic";
 
@@ -173,7 +174,8 @@ export default async function DashboardPage() {
                                 </span>
                                 <StatusPill status={g.result} />
                               </summary>
-                              <div className="absolute z-10 mt-1 w-56 rounded-md border border-black/10 bg-white p-2 text-xs text-[#52514e] shadow-lg">
+                              <div className="absolute z-10 mt-1 w-56 rounded-md border border-black/10 bg-white p-2 pr-5 text-xs text-[#52514e] shadow-lg">
+                                <ClosePopoverButton />
                                 {g.reason || "(לא צוינה סיבה)"}
                                 <ReportErrorButton
                                   groupName={g.group_name}
