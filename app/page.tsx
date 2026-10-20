@@ -10,6 +10,7 @@ import { StatusTrendChart } from "@/components/StatusTrendChart";
 import { fetchMakeStatus, type ScenarioStatus } from "@/lib/makeStatus";
 import { MakeStatusCard } from "@/components/MakeStatusCard";
 import { ExpandableText } from "@/components/ExpandableText";
+import { ReportErrorButton } from "@/components/ReportErrorButton";
 
 export const dynamic = "force-dynamic";
 
@@ -142,19 +143,51 @@ export default async function DashboardPage() {
                 ) : (
                   <p className="text-sm mt-1 text-[#898781]">(אין טקסט רשום)</p>
                 )}
-                <div className="flex flex-wrap gap-2 mt-3">
-                  {m.groups.map((g, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center gap-1.5 rounded-md border border-black/10 px-2 py-1"
-                    >
-                      <span className="text-[11px] font-medium text-[#52514e]">
-                        {g.group_name}
-                      </span>
-                      <StatusPill status={g.result} />
+                {(() => {
+                  const completed = m.groups.filter((g) => g.result === "Completed");
+                  const failed = m.groups.filter((g) => g.result !== "Completed");
+                  return (
+                    <div className="mt-3 space-y-2">
+                      {completed.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {completed.map((g, i) => (
+                            <div
+                              key={i}
+                              className="flex items-center gap-1.5 rounded-md border border-black/10 px-2 py-1"
+                            >
+                              <span className="text-[11px] font-medium text-[#52514e]">
+                                {g.group_name}
+                              </span>
+                              <StatusPill status={g.result} />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {failed.length > 0 && (
+                        <div className="flex flex-wrap gap-2 border-t border-black/5 pt-2">
+                          {failed.map((g, i) => (
+                            <details key={i} className="group relative">
+                              <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-md border border-black/10 px-2 py-1 marker:content-none">
+                                <span className="text-[11px] font-medium text-[#52514e]">
+                                  {g.group_name}
+                                </span>
+                                <StatusPill status={g.result} />
+                              </summary>
+                              <div className="absolute z-10 mt-1 w-56 rounded-md border border-black/10 bg-white p-2 text-xs text-[#52514e] shadow-lg">
+                                {g.reason || "(לא צוינה סיבה)"}
+                                <ReportErrorButton
+                                  groupName={g.group_name}
+                                  reason={g.reason}
+                                  messageText={m.text}
+                                />
+                              </div>
+                            </details>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  ))}
-                </div>
+                  );
+                })()}
               </div>
             ))}
           </div>

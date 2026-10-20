@@ -17,6 +17,7 @@ export type MessageGroup = {
   group_id: string;
   group_name: string;
   result: string;
+  reason: string | null;
 };
 
 export type MessageSummary = {
@@ -132,6 +133,7 @@ export function recentMessages(
             group_id: r.group_id,
             group_name: resolveGroupName(r.group_id, groupNames),
             result: r.result,
+            reason: r.reason,
           }))
           .sort((a, b) => {
             const na = Number(a.group_name);
