@@ -60,6 +60,14 @@ export function resolveGroupName(
   return groupNames.get(group_id) ?? group_id;
 }
 
+export function todayRows(rows: LogRow[]): LogRow[] {
+  const todayKey = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Jerusalem" });
+  return rows.filter((r) => {
+    const rowKey = new Date(r.timestamp).toLocaleDateString("en-CA", { timeZone: "Asia/Jerusalem" });
+    return rowKey === todayKey;
+  });
+}
+
 export function statusBreakdown(rows: LogRow[]): StatusCount[] {
   const counts = new Map<string, number>();
   for (const row of rows) {

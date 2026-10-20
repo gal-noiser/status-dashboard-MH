@@ -4,6 +4,7 @@ import {
   fetchLog,
   recentMessages,
   statusBreakdown,
+  todayRows,
 } from "@/lib/log";
 import { RefreshButton } from "@/components/RefreshButton";
 import { StatusTrendChart } from "@/components/StatusTrendChart";
@@ -53,7 +54,8 @@ export default async function DashboardPage() {
   }
 
   const { rows, groupNames } = feed;
-  const statuses = statusBreakdown(rows);
+  const rowsToday = todayRows(rows);
+  const statuses = statusBreakdown(rowsToday);
   const messages = recentMessages(rows, groupNames, 5);
   const trend = dailyStatusTrend(rows, 14);
   const allStatuses = distinctStatuses(rows);
@@ -106,7 +108,7 @@ export default async function DashboardPage() {
       )}
 
       <section className="flex flex-wrap gap-4">
-        <StatTile label="סה״כ נבדקו" value={String(rows.length)} />
+        <StatTile label="סה״כ נבדקו היום" value={String(rowsToday.length)} />
         {statuses.map((s) => (
           <StatTile key={s.status} label={s.status} value={String(s.count)} />
         ))}
